@@ -1,13 +1,14 @@
 version: '3'
 services: 
   devcontainer-jazzy:
-    volumes: 
+    volumes:
       - ..:/workspace:cached
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /mnt/wslg:/mnt/wslg
       - /root/.gazebo/models/:/root/.gazebo/models/
-      - /var/run/docker.sock:/var/run/docker.sock 
+      - /var/run/docker.sock:/var/run/docker.sock
       - $HOME/.Xauthority:/tmp/.Xauthority:rw
+      - $HOME/.claude:/root/.claude
     environment:
       - DISPLAY=${DISPLAY}
       - XAUTHORITY=/tmp/.Xauthority

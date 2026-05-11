@@ -17,6 +17,10 @@ RUN apt update && apt install -y --no-install-recommends \
     python3-yaml \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade all base-image packages before adding new repos, to prevent
+# stale ABI mismatches (e.g. fastcdr 2.2.5 vs packages compiled against 2.2.7)
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 # Add OSRF Gazebo apt repository (needed for gz-harmonic binary)
 RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/* && \
     curl -sSL https://packages.osrfoundation.org/gazebo.gpg \
@@ -52,22 +56,28 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     mesa-utils \
     libx11-xcb1
 
-# install zsh and oh-my-zsh
-RUN apt update && apt install -y zsh git wget
-RUN wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh && chmod +x install.sh && ls
-RUN ./install.sh
+# install zsh, oh-my-zsh, and completion packages
+RUN apt update && apt install -y zsh git wget zsh-syntax-highlighting zsh-autosuggestions
+RUN wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh && chmod +x install.sh && \
+    ./install.sh
 RUN git clone https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
-    apt install -y zsh-syntax-highlighting
+    git clone https://github.com/zsh-users/zsh-completions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-completions
 
 # configure zsh
 RUN echo 'export ZSH=$HOME/.oh-my-zsh' >> ~/.zshrc && \
     echo 'ZSH_THEME="ys"' >> ~/.zshrc && \
-    echo 'plugins=(git zsh-autosuggestions)' >> ~/.zshrc && \
+    echo 'plugins=(git zsh-autosuggestions zsh-completions)' >> ~/.zshrc && \
     echo 'source $ZSH/oh-my-zsh.sh' >> ~/.zshrc && \
     echo 'source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' >> ~/.zshrc
 
 WORKDIR /workspace
-RUN echo "source /opt/ros/jazzy/setup.sh" >> ~/.zshrc && \
-    echo '[ -f /workspace/install/setup.zsh ] && source /workspace/install/setup.zsh' >> ~/.zshrc
+# Use setup.zsh (not setup.sh) so ROS 2 tab completions work in zsh
+# Store history in the already-mounted ~/.claude dir so it persists across rebuilds
+RUN echo "source /opt/ros/jazzy/setup.zsh" >> ~/.zshrc && \
+    echo '[ -f /workspace/install/setup.zsh ] && source /workspace/install/setup.zsh' >> ~/.zshrc && \
+    echo 'HISTFILE=/root/.claude/.zsh_history' >> ~/.zshrc && \
+    echo 'HISTSIZE=10000' >> ~/.zshrc && \
+    echo 'SAVEHIST=10000' >> ~/.zshrc && \
+    echo 'setopt SHARE_HISTORY' >> ~/.zshrc
 
 CMD [ "zsh" ]
