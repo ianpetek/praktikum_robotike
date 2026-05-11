@@ -1,0 +1,30 @@
+version: '3'
+services: 
+  devcontainer-jazzy:
+    volumes: 
+      - ..:/workspace:cached
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /mnt/wslg:/mnt/wslg
+      - /root/.gazebo/models/:/root/.gazebo/models/
+      - /var/run/docker.sock:/var/run/docker.sock 
+      - $HOME/.Xauthority:/tmp/.Xauthority:rw
+    environment:
+      - DISPLAY=${DISPLAY}
+      - XAUTHORITY=/tmp/.Xauthority
+
+    cap_add:
+      - SYS_PTRACE  
+    command: /bin/sh -c "while sleep 1000; do :; done"
+    env_file:
+      - devcontainer.env
+ 
+    build:
+      context: .
+      dockerfile: Dockerfile-jazzy
+    # image: ros2-jazzy-dev:latest
+    
+    # run `cd .devcontainer/ && docker build . -t ros2-jazzy-dev:latest -f Dockerfile-jazzy` 
+    # to use the development environment, or you can build it with Dockerfile.
+    # Perhaps Unitree will provide a dockerhub image later to save you time compiling.
+    privileged: true
+    network_mode: "host"

@@ -1,0 +1,73 @@
+FROM althack/ros2:jazzy-full
+
+# Set locale to Croatia
+ENV TZ=Europe/Zagreb
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+USER root
+
+# Install ROS dependencies required by apriltag_follower
+RUN apt update && apt install -y --no-install-recommends \
+    ros-jazzy-geometry-msgs \
+    ros-jazzy-launch \
+    ros-jazzy-launch-ros \
+    ros-jazzy-rclpy \
+    ros-jazzy-tf2-ros \
+    ros-jazzy-tf-transformations \
+    ros-jazzy-usb-cam \
+    python3-yaml \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add OSRF Gazebo apt repository (needed for gz-harmonic binary)
+RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/* && \
+    curl -sSL https://packages.osrfoundation.org/gazebo.gpg \
+        -o /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] \
+        http://packages.osrfoundation.org/gazebo/ubuntu-stable \
+        $(. /etc/os-release && echo $UBUNTU_CODENAME) main" \
+        > /etc/apt/sources.list.d/gazebo-stable.list
+
+# Install Gazebo Harmonic + full robot description and simulation stack
+RUN apt update && apt install -y --no-install-recommends \
+    gz-harmonic \
+    ros-jazzy-xacro \
+    ros-jazzy-robot-state-publisher \
+    ros-jazzy-joint-state-publisher \
+    ros-jazzy-joint-state-publisher-gui \
+    ros-jazzy-rviz2 \
+    ros-jazzy-ros2-control \
+    ros-jazzy-ros2-controllers \
+    ros-jazzy-gz-ros2-control \
+    ros-jazzy-ros-gz-sim \
+    ros-jazzy-ros-gz-bridge \
+    ros-jazzy-ros-gz-interfaces \
+    ros-jazzy-moveit \
+    python3-colcon-common-extensions \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    qt6-wayland \
+    libgl1 \
+    libglx-mesa0 \
+    libegl1 \
+    mesa-utils \
+    libx11-xcb1
+
+# install zsh and oh-my-zsh
+RUN apt update && apt install -y zsh git wget
+RUN wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh && chmod +x install.sh && ls
+RUN ./install.sh
+RUN git clone https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions && \
+    apt install -y zsh-syntax-highlighting
+
+# configure zsh
+RUN echo 'export ZSH=$HOME/.oh-my-zsh' >> ~/.zshrc && \
+    echo 'ZSH_THEME="ys"' >> ~/.zshrc && \
+    echo 'plugins=(git zsh-autosuggestions)' >> ~/.zshrc && \
+    echo 'source $ZSH/oh-my-zsh.sh' >> ~/.zshrc && \
+    echo 'source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' >> ~/.zshrc
+
+WORKDIR /workspace
+RUN echo "source /opt/ros/jazzy/setup.sh" >> ~/.zshrc && \
+    echo '[ -f /workspace/install/setup.zsh ] && source /workspace/install/setup.zsh' >> ~/.zshrc
+
+CMD [ "zsh" ]

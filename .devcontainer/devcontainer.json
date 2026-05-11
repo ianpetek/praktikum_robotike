@@ -1,0 +1,49 @@
+{
+	"name": "ROS 2 Jazzy Devcontainer",
+	"dockerComposeFile": [
+		"docker-compose.yml"
+	],
+	"service": "devcontainer-jazzy",
+	"workspaceFolder": "/workspace",
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "zsh",
+				"C_Cpp.intelliSenseEngine": "disabled",
+				"clangd.arguments": [
+					"--compile-commands-dir=/workspace",
+					"--background-index",
+					"--clang-tidy",
+					"--header-insertion=iwyu",
+					"--query-driver=/usr/bin/clang++-18"
+				],
+				"clangd.onConfigChanged": "restart",
+				"python.defaultInterpreterPath": "/usr/bin/python3",
+				"python.analysis.extraPaths": [
+					"/opt/ros/jazzy/lib/python3.12/site-packages",
+					"/usr/lib/python3/dist-packages",
+					"/usr/lib/python3.12/dist-packages",
+					"/usr/local/lib/python3.12/dist-packages",
+					"/workspace/ws/install/lib/python3.12/site-packages",
+					"/workspace/ws/install/local/lib/python3.12/dist-packages"
+				],
+				"python.autoComplete.extraPaths": [
+					"/opt/ros/jazzy/lib/python3.12/site-packages",
+					"/usr/lib/python3/dist-packages",
+					"/usr/lib/python3.12/dist-packages",
+					"/usr/local/lib/python3.12/dist-packages",
+					"/workspace/ws/install/lib/python3.12/site-packages",
+					"/workspace/ws/install/local/lib/python3.12/dist-packages"
+				]
+			},
+			"extensions": [
+				"llvm-vs-code-extensions.vscode-clangd",
+				"ms-vscode.cmake-tools",
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-iot.vscode-ros",
+				"anthropic.claude-code"
+			]
+		}
+	}
+}

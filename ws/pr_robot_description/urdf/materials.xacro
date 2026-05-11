@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<robot name="pr_robot" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+<material name="pr_robot_silver">
+  <color rgba="0.700 0.700 0.700 1.000"/>
+</material>
+
+<material name="pr_robot_color0">
+  <color rgba="1.0 0.761 0.055 1.0"/>
+</material>
+
+<material name="pr_robot_color1">
+  <color rgba="0.357 0.357 0.357 1.0"/>
+</material>
+
+<material name="pr_robot_color2">
+  <color rgba="0.965 0.965 0.953 1.0"/>
+</material>
+
+</robot>

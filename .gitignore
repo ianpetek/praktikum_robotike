@@ -1,0 +1,11 @@
+**/build/
+**/.vscode/
+**/__pycache__/
+**/log/
+**/install/
+.cache
+apriltag_localization/__pycache__/apriltag_loc.cpython-312.pyc
+
+data/
+
+*.env
