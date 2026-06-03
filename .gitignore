@@ -7,5 +7,6 @@
 apriltag_localization/__pycache__/apriltag_loc.cpython-312.pyc
 
 data/
+.claude
 
 *.env

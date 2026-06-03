@@ -44,7 +44,6 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-jazzy-ros-gz-sim \
     ros-jazzy-ros-gz-bridge \
     ros-jazzy-ros-gz-interfaces \
-    ros-jazzy-moveit \
     python3-colcon-common-extensions \
     && rm -rf /var/lib/apt/lists/*
 
@@ -54,7 +53,14 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libglx-mesa0 \
     libegl1 \
     mesa-utils \
-    libx11-xcb1
+    libx11-xcb1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Dynamixel packages from apt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-jazzy-dynamixel-sdk \
+    ros-jazzy-dynamixel-hardware \
+    && rm -rf /var/lib/apt/lists/*
 
 # install zsh, oh-my-zsh, and completion packages
 RUN apt update && apt install -y zsh git wget zsh-syntax-highlighting zsh-autosuggestions

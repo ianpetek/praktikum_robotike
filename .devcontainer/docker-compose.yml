@@ -13,8 +13,12 @@ services:
       - DISPLAY=${DISPLAY}
       - XAUTHORITY=/tmp/.Xauthority
 
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    group_add:
+      - dialout
     cap_add:
-      - SYS_PTRACE  
+      - SYS_PTRACE
     command: /bin/sh -c "while sleep 1000; do :; done"
     env_file:
       - devcontainer.env

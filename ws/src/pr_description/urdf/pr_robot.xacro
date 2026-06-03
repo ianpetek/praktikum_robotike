@@ -1,8 +1,17 @@
 <?xml version="1.0" ?>
 <robot name="pr_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+<xacro:arg name="use_sim" default="true"/>
+
 <xacro:include filename="$(find pr_description)/urdf/materials.xacro" />
 <xacro:include filename="$(find pr_description)/urdf/pr_robot.gazebo" />
+
+<link name="world"/>
+
+<joint name="world_joint" type="fixed">
+  <parent link="world"/>
+  <child link="base_link"/>
+</joint>
 
 <link name="base_link">
   <inertial>
@@ -152,7 +161,7 @@
 </link>
 
 <joint name="yaw_joint" type="revolute">
-  <origin xyz="0.0 0.012 0.036" rpy="0.0 0.0 0.0"/>
+  <origin xyz="0.0 0.012 0.036" rpy="0.0 0.0 3.14159"/>
   <parent link="base_link"/>
   <child link="yaw_link"/>
   <axis xyz="0.0 0.0 1.0"/>
@@ -163,7 +172,7 @@
   <origin xyz="-0.019 0.0 0.0405" rpy="0.0 0.0 0.0"/>
   <parent link="yaw_link"/>
   <child link="bicep_link"/>
-  <axis xyz="-1.0 0.0 0.0"/>
+  <axis xyz="1.0 0.0 0.0"/>
   <limit upper="1.570796" lower="0.0" effort="100" velocity="100"/>
 </joint>
 
@@ -171,7 +180,7 @@
   <origin xyz="0.0 0.000172 0.174" rpy="0.0 0.0 0.0"/>
   <parent link="bicep_link"/>
   <child link="forearm_link"/>
-  <axis xyz="-1.0 0.0 0.0"/>
+  <axis xyz="1.0 0.0 0.0"/>
   <limit upper="0.785398" lower="-1.570796" effort="100" velocity="100"/>
 </joint>
 
@@ -195,6 +204,7 @@
   <child link="pen_tip_link"/>
 </joint>
 
+<xacro:if value="$(arg use_sim)">
 <ros2_control name="pr_robot" type="system">
   <hardware>
     <plugin>gz_ros2_control/GazeboSimSystem</plugin>
@@ -214,11 +224,41 @@
     <state_interface name="position"/>
     <state_interface name="velocity"/>
   </joint>
-  <joint name="pen_mount_joint">
+</ros2_control>
+</xacro:if>
+
+<xacro:unless value="$(arg use_sim)">
+<ros2_control name="DynamixelHardware" type="system">
+  <hardware>
+    <plugin>dynamixel_hardware/DynamixelHardware</plugin>
+    <param name="usb_port">/dev/ttyUSB0</param>
+    <param name="baud_rate">1000000</param>
+  </hardware>
+  <joint name="forearm_joint">
+    <param name="id">11</param>
+    <param name="profile_acceleration">50</param>
+    <param name="profile_velocity">200</param>
+    <command_interface name="position"/>
+    <state_interface name="position"/>
+    <state_interface name="velocity"/>
+  </joint>
+  <joint name="yaw_joint">
+    <param name="id">12</param>
+    <param name="profile_acceleration">50</param>
+    <param name="profile_velocity">200</param>
+    <command_interface name="position"/>
+    <state_interface name="position"/>
+    <state_interface name="velocity"/>
+  </joint>
+  <joint name="bicep_joint">
+    <param name="id">13</param>
+    <param name="profile_acceleration">50</param>
+    <param name="profile_velocity">200</param>
     <command_interface name="position"/>
     <state_interface name="position"/>
     <state_interface name="velocity"/>
   </joint>
 </ros2_control>
+</xacro:unless>
 
 </robot>
