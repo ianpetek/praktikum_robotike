@@ -8,6 +8,9 @@ controller_manager:
     arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
+    pen_mount_controller:
+      type: forward_command_controller/ForwardCommandController
+
 arm_controller:
   ros__parameters:
     joints:
@@ -20,3 +23,9 @@ arm_controller:
       - position
       - velocity
     allow_nonzero_velocity_at_trajectory_end: true
+
+pen_mount_controller:
+  ros__parameters:
+    joints:
+      - pen_mount_joint
+    interface_name: position

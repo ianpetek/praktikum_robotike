@@ -47,12 +47,26 @@ def generate_launch_description():
         executable='pen_mount_broadcaster.py',
         name='pen_mount_broadcaster',
         output='screen',
-        parameters=[{'use_sim_time': True}],
+        parameters=[{'use_sim_time': True, 'use_sim': True}],
+    )
+
+    pen_mount_spawner = TimerAction(
+        period=5.0,
+        actions=[
+            Node(
+                package='controller_manager',
+                executable='spawner',
+                arguments=['pen_mount_controller', '--controller-manager', '/controller_manager'],
+                parameters=[{'use_sim_time': True}],
+                output='screen',
+            )
+        ],
     )
 
     return LaunchDescription([
         gazebo_launch,
         jsb_spawner,
         arm_spawner,
+        pen_mount_spawner,
         pen_mount_broadcaster,
     ])

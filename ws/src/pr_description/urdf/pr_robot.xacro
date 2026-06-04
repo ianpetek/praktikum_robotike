@@ -27,9 +27,9 @@
     <material name="pr_robot_silver"/>
   </visual>
   <collision>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0.0 0.0 0.0175" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://pr_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      <box size="0.044 0.080 0.041"/>
     </geometry>
   </collision>
 </link>
@@ -48,9 +48,9 @@
     <material name="pr_robot_color0"/>
   </visual>
   <collision>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0.0 0.0 0.026" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://pr_description/meshes/yaw_link.stl" scale="0.001 0.001 0.001"/>
+      <box size="0.056 0.029 0.052"/>
     </geometry>
   </collision>
 </link>
@@ -69,9 +69,9 @@
     <material name="pr_robot_color0"/>
   </visual>
   <collision>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0.019 0.0 0.091" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://pr_description/meshes/bicep_link.stl" scale="0.001 0.001 0.001"/>
+      <box size="0.042 0.029 0.188"/>
     </geometry>
   </collision>
 </link>
@@ -90,9 +90,9 @@
     <material name="pr_robot_color0"/>
   </visual>
   <collision>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0.019 0.078 0.0" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://pr_description/meshes/forearm_link.stl" scale="0.001 0.001 0.001"/>
+      <box size="0.056 0.167 0.021"/>
     </geometry>
   </collision>
 </link>
@@ -111,9 +111,9 @@
     <material name="pr_robot_color1"/>
   </visual>
   <collision>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0.005 0.029 0.009" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://pr_description/meshes/pen_mount_link.stl" scale="0.001 0.001 0.001"/>
+      <box size="0.052 0.066 0.061"/>
     </geometry>
   </collision>
 </link>
@@ -132,9 +132,9 @@
     <material name="pr_robot_silver"/>
   </visual>
   <collision>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0.0 0.0 0.023" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://pr_description/meshes/pen_link.stl" scale="0.001 0.001 0.001"/>
+      <cylinder radius="0.006" length="0.132"/>
     </geometry>
   </collision>
 </link>
@@ -155,7 +155,7 @@
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://pr_description/meshes/pen_tip_link.stl" scale="0.001 0.001 0.001"/>
+      <sphere radius="0.001"/>
     </geometry>
   </collision>
 </link>
@@ -220,6 +220,11 @@
     <state_interface name="velocity"/>
   </joint>
   <joint name="forearm_joint">
+    <command_interface name="position"/>
+    <state_interface name="position"/>
+    <state_interface name="velocity"/>
+  </joint>
+  <joint name="pen_mount_joint">
     <command_interface name="position"/>
     <state_interface name="position"/>
     <state_interface name="velocity"/>
