@@ -8,7 +8,7 @@
 	"hostRequirements": {
 		"gpu": "optional"
 	},
-	"postStartCommand": "for f in /sys/class/tty/ttyUSB*; do name=$(basename $f); [ ! -e /dev/$name ] && [ -f $f/dev ] && { IFS=: read maj min < $f/dev; mknod /dev/$name c $maj $min; chmod 666 /dev/$name; }; done || true",
+	"postStartCommand": "for f in /sys/class/tty/ttyUSB*; do name=$(basename $f); [ ! -e /dev/$name ] && [ -f $f/dev ] && { IFS=: read maj min < $f/dev; mknod /dev/$name c $maj $min; chmod 666 /dev/$name; }; done || true; chown -R 1000:1000 /root/.claude",
 	"customizations": {
 		"vscode": {
 			"settings": {

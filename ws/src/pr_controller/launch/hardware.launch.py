@@ -60,6 +60,13 @@ def generate_launch_description():
         output='screen',
     )
 
+    inverse_kinematics_control = Node(
+        package='pr_controller',
+        executable='inverse_kinematics_control.py',
+        name='inverse_kinematics_control',
+        output='screen',
+    )
+
     rviz = Node(
         package='rviz2',
         executable='rviz2',
@@ -74,5 +81,6 @@ def generate_launch_description():
         jsb_spawner,
         arm_spawner,
         pen_mount_broadcaster,
+        inverse_kinematics_control,
         rviz,
     ])

@@ -173,7 +173,7 @@
   <parent link="yaw_link"/>
   <child link="bicep_link"/>
   <axis xyz="1.0 0.0 0.0"/>
-  <limit upper="1.570796" lower="0.0" effort="100" velocity="100"/>
+  <limit upper="1.570796" lower="-1.570796" effort="100" velocity="100"/>
 </joint>
 
 <joint name="forearm_joint" type="revolute">
@@ -181,7 +181,7 @@
   <parent link="bicep_link"/>
   <child link="forearm_link"/>
   <axis xyz="1.0 0.0 0.0"/>
-  <limit upper="0.785398" lower="-1.570796" effort="100" velocity="100"/>
+  <limit upper="1.570796" lower="-1.570796" effort="100" velocity="100"/>
 </joint>
 
 <joint name="pen_mount_joint" type="revolute">

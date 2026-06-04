@@ -50,6 +50,14 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True, 'use_sim': True}],
     )
 
+    inverse_kinematics_control = Node(
+        package='pr_controller',
+        executable='inverse_kinematics_control.py',
+        name='inverse_kinematics_control',
+        output='screen',
+        parameters=[{'use_sim_time': True, 'use_sim': True}],
+    )
+
     pen_mount_spawner = TimerAction(
         period=5.0,
         actions=[
@@ -69,4 +77,5 @@ def generate_launch_description():
         arm_spawner,
         pen_mount_spawner,
         pen_mount_broadcaster,
+        inverse_kinematics_control,
     ])
