@@ -132,6 +132,12 @@ class InverseKinematicsControl(Node):
         # moves, at the risk of the controller dropping points on tight curves.
         self.declare_parameter('min_segment_time', 0.02)
         self._min_segment_time = self.get_parameter('min_segment_time').get_parameter_value().double_value
+        # Sharp turns within a stroke get a zero-velocity stop (and optional
+        # hold) so corners stay crisp instead of being rounded off.
+        self.declare_parameter('corner_angle', 35.0)     # deg; turns sharper than this stop
+        self._corner_angle = self.get_parameter('corner_angle').get_parameter_value().double_value
+        self.declare_parameter('corner_dwell', 0.05)     # s, hold at a sharp corner
+        self._corner_dwell = self.get_parameter('corner_dwell').get_parameter_value().double_value
 
         # Allow the drawing parameters to be changed live, e.g.
         # `ros2 param set /inverse_kinematics_control draw_speed 0.03`.
@@ -163,9 +169,13 @@ class InverseKinematicsControl(Node):
                 return SetParametersResult(
                     successful=False, reason=f'{p.name} must be > 0'
                 )
-            if p.name == 'contact_dwell' and p.value < 0.0:
+            if p.name in ('contact_dwell', 'corner_dwell') and p.value < 0.0:
                 return SetParametersResult(
-                    successful=False, reason='contact_dwell must be >= 0'
+                    successful=False, reason=f'{p.name} must be >= 0'
+                )
+            if p.name == 'corner_angle' and not (0.0 < p.value < 180.0):
+                return SetParametersResult(
+                    successful=False, reason='corner_angle must be in (0, 180) deg'
                 )
             if p.name == 'draw_speed':
                 self._draw_speed = p.value
@@ -181,6 +191,10 @@ class InverseKinematicsControl(Node):
                 self._travel_speed = p.value
             elif p.name == 'min_segment_time':
                 self._min_segment_time = p.value
+            elif p.name == 'corner_angle':
+                self._corner_angle = p.value
+            elif p.name == 'corner_dwell':
+                self._corner_dwell = p.value
         return SetParametersResult(successful=True)
 
     def forward_kinematics(self, q):
@@ -336,15 +350,20 @@ class InverseKinematicsControl(Node):
         * 'draw'   -- planar move at the paper -> draw_speed.
 
         Every segment is floored at min_segment_time so setpoints never arrive
-        faster than the controller can execute (avoids skipping), and a
-        contact_dwell hold is inserted only where the pen lands or lifts (a
-        'draw'<->vertical transition) so the arm settles to zero velocity there.
-        The paper level is taken as the lowest z in the path.
+        faster than the controller can execute (avoids skipping). The paper
+        level is taken as the lowest z in the path.
+
+        Line quality is improved two ways:
+        * velocity feedforward -- each point carries the path-tangent joint
+          velocity (central difference), so the controller tracks the line
+          instead of guessing the spline shape from positions alone;
+        * stops (zero velocity, plus an optional hold) are placed at pen
+          contact/lift and at sharp corners, so corners stay crisp and the pen
+          lands/leaves cleanly instead of overshooting or rounding off.
         """
-        traj = JointTrajectory()
-        traj.joint_names = list(self.JOINT_NAMES)
         n = len(samples)
         z_paper = min(float(s[2]) for s in samples)
+        verticals = {'up', 'down'}
 
         def seg_kind(a, b):
             dz = b[2] - a[2]
@@ -369,32 +388,69 @@ class InverseKinematicsControl(Node):
                     dt = max(dt, dz / self._lift_speed)
             return max(dt, self._min_segment_time)
 
-        def add(ang, t):
-            point = JointTrajectoryPoint()
-            point.positions = [ang[j] for j in self.JOINT_NAMES]
-            point.time_from_start = Duration(seconds=t).to_msg()
-            traj.points.append(point)
+        def turn_angle(a, b, c):
+            """Direction change (rad) of the planar path at b."""
+            v1 = np.array([b[0] - a[0], b[1] - a[1]])
+            v2 = np.array([c[0] - b[0], c[1] - b[1]])
+            n1, n2 = np.linalg.norm(v1), np.linalg.norm(v2)
+            if n1 < 1e-9 or n2 < 1e-9:
+                return 0.0
+            cos = float(np.dot(v1, v2) / (n1 * n2))
+            return float(np.arccos(max(-1.0, min(1.0, cos))))
 
+        qarr = [np.array([ang[j] for j in self.JOINT_NAMES]) for ang in angles]
+        corner_rad = np.radians(self._corner_angle)
+
+        # --- pass 1: build (q, time, stop) nodes ---------------------------
         # Approach to the first point: time it like a travel move, by the actual
         # distance from the current pen pose, floored by draw_lead_time.
         t = self._draw_lead_time
         if self._current_q is not None:
             approach = float(np.linalg.norm(samples[0] - self.forward_kinematics(self._current_q)))
             t = max(approach / self._travel_speed, self._draw_lead_time)
-        add(angles[0], t)
+
+        nodes = [[qarr[0], t, True]]   # [positions, time_from_start, is_stop]
         for i in range(1, n):
             kind = seg_kind(samples[i - 1], samples[i])
             t += seg_time(samples[i - 1], samples[i], kind)
-            add(angles[i], t)
 
-            # Settle at pen contact: a 'draw' segment meeting a vertical one.
-            if 0 < i < n - 1 and self._contact_dwell > 0.0:
+            contact = corner = False
+            if 0 < i < n - 1:
                 next_kind = seg_kind(samples[i], samples[i + 1])
-                verticals = {'up', 'down'}
-                if (kind == 'draw') != (next_kind == 'draw') and (
-                        kind in verticals or next_kind in verticals):
-                    t += self._contact_dwell
-                    add(angles[i], t)
+                contact = ((kind == 'draw') != (next_kind == 'draw')
+                           and (kind in verticals or next_kind in verticals))
+                if kind == 'draw' and next_kind == 'draw':
+                    corner = turn_angle(samples[i - 1], samples[i], samples[i + 1]) > corner_rad
+
+            is_last = (i == n - 1)
+            nodes.append([qarr[i], t, contact or corner or is_last])
+
+            # Optional hold to guarantee a clean stop.
+            if contact and self._contact_dwell > 0.0:
+                t += self._contact_dwell
+                nodes.append([qarr[i], t, True])
+            elif corner and self._corner_dwell > 0.0:
+                t += self._corner_dwell
+                nodes.append([qarr[i], t, True])
+
+        # --- pass 2: emit with velocity feedforward ------------------------
+        traj = JointTrajectory()
+        traj.joint_names = list(self.JOINT_NAMES)
+        m = len(nodes)
+        for k in range(m):
+            q, tt, stop = nodes[k]
+            if stop or k == 0 or k == m - 1:
+                vel = np.zeros(3)
+            else:
+                qp, tp, _ = nodes[k - 1]
+                qn, tn, _ = nodes[k + 1]
+                dt = tn - tp
+                vel = (qn - qp) / dt if dt > 1e-9 else np.zeros(3)
+            point = JointTrajectoryPoint()
+            point.positions = [float(x) for x in q]
+            point.velocities = [float(x) for x in vel]
+            point.time_from_start = Duration(seconds=tt).to_msg()
+            traj.points.append(point)
         return traj
 
     def _send_path_goal(self, traj):
