@@ -1,0 +1,31 @@
+# Single source of truth for the calibration sheet geometry.
+#
+# Read by:
+#   * generate_calibration_sheet.py  (to lay out the printed A4)
+#   * calibrate.launch.py            (to configure usb_cam + apriltag_ros)
+#   * calibrate_camera.py            (as the KNOWN tag -> base transform)
+#
+# Frame note: base_link == world (identity). The arm's drawing workspace is the
+# -y side ("front"); +y is behind the robot. The tag is therefore placed BEHIND
+# the robot (+y), where it is clear of the workspace/arm but still seen by the
+# overhead camera. All lengths in millimetres, angles in degrees.
+
+tag_family: "36h11"          # AprilTag family (cv2.aruco DICT_APRILTAG_36h11)
+tag_id: 0                    # which tag to print/detect
+tag_size_mm: 80.0            # printed black-square edge length (== apriltag "size")
+
+# Tag CENTER expressed in the base_link frame (lies flat on the table, z = 0).
+tag_center_in_base_mm:
+  x: 0.0
+  y: 150.0                   # +y => behind the robot, out of the workspace
+tag_yaw_deg: 0.0             # rotation of the tag about +z relative to base_link
+
+# Frame names used across the pipeline.
+frames:
+  camera: "camera_optical_frame"   # camera_info/image header.frame_id (set on usb_cam)
+  tag: "calib_tag"                 # frame apriltag_ros publishes for this tag
+  base: "base_link"                # robot base / output child frame
+
+# Calibration behaviour.
+samples: 30                  # TF samples to average for a stable result
+output: "camera_extrinsics.yaml"   # written next to this file (or --output path)
