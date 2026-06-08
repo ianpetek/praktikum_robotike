@@ -1,11 +1,11 @@
-"""Bring up the real overhead camera, AprilTag detection, and the calibration node.
+"""Bring up the overhead camera (with calibrated intrinsics), AprilTag detection,
+and the extrinsic calibration node.
 
-    ros2 launch pr_calibration calibrate.launch.py video_device:=/dev/video0 \
-        camera_info_url:=file:///path/to/overhead_camera.yaml
+    ros2 launch pr_calibration calibrate.launch.py
 
-The camera MUST be intrinsically calibrated (pass a valid camera_info_url) for the
-tag pose — and therefore the calibration — to be metrically correct. Use the
-already-installed `camera_calibration` tool to produce that file if needed.
+Intrinsics come from config/camera_calibration_params.yaml (run
+intrinsic_calibration.launch.py first if not yet calibrated). The node writes the
+camera->base_link extrinsic to config/camera_extrinsics.yaml.
 
 Pipeline: usb_cam (image_raw + camera_info) -> image_proc rectify (image_rect)
           -> apriltag_ros (TF camera -> tag) -> calibrate_camera (writes YAML).
@@ -13,8 +13,6 @@ Pipeline: usb_cam (image_raw + camera_info) -> image_proc rectify (image_rect)
 import os
 import yaml
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
@@ -22,25 +20,16 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
     share = get_package_share_directory('pr_calibration')
     layout_file = os.path.join(share, 'config', 'layout.yaml')
+    camera_params = os.path.join(share, 'config', 'camera_params.yaml')
     with open(layout_file) as f:
         cfg = yaml.safe_load(f)
 
     size_m = float(cfg['tag_size_mm']) / 1000.0
-    camera_frame = cfg['frames']['camera']
     tag_frame = cfg['frames']['tag']
 
-    video_device = LaunchConfiguration('video_device')
-    camera_info_url = LaunchConfiguration('camera_info_url')
-
     usb_cam = Node(
-        package='usb_cam', executable='usb_cam_node_exe', name='usb_cam',
-        output='screen',
-        parameters=[{
-            'video_device': video_device,
-            'frame_id': camera_frame,
-            'camera_info_url': camera_info_url,
-            'pixel_format': 'mjpeg2rgb',
-        }],
+        package='usb_cam', executable='usb_cam_node_exe', name='camera',
+        output='screen', parameters=[camera_params],
     )
 
     rectify = Node(
@@ -80,10 +69,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('video_device', default_value='/dev/video0'),
-        DeclareLaunchArgument(
-            'camera_info_url', default_value='',
-            description='file:// URL to the calibrated camera_info YAML (required for accuracy)'),
         usb_cam,
         rectify,
         apriltag,

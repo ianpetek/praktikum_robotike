@@ -22,7 +22,7 @@ tag_yaw_deg: 0.0             # rotation of the tag about +z relative to base_lin
 
 # Frame names used across the pipeline.
 frames:
-  camera: "camera_optical_frame"   # camera_info/image header.frame_id (set on usb_cam)
+  camera: "camera"                 # camera_info/image header.frame_id (set on usb_cam)
   tag: "calib_tag"                 # frame apriltag_ros publishes for this tag
   base: "base_link"                # robot base / output child frame
 

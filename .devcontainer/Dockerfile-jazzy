@@ -15,6 +15,12 @@ RUN apt update && apt install -y --no-install-recommends \
     ros-jazzy-tf-transformations \
     ros-jazzy-usb-cam \
     ros-jazzy-apriltag-ros \
+    ros-jazzy-image-pipeline \
+    ros-jazzy-camera-calibration \
+    ros-jazzy-cv-bridge \
+    ros-jazzy-message-filters \
+    ros-jazzy-visualization-msgs \
+    ros-jazzy-std-srvs \
     python3-yaml \
     && rm -rf /var/lib/apt/lists/*
 
@@ -55,6 +61,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libegl1 \
     mesa-utils \
     libx11-xcb1 \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Dynamixel packages from apt
@@ -64,6 +71,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --no-cache-dir --break-system-packages reportlab numpy-stl
+
+# YOLO (Ultralytics) Python stack for prarob_yolo, installed as ONE coherent set
+# that stays compatible with ROS. numpy<2 is required by ROS cv_bridge /
+# camera_calibration; opencv-python 4.9.0.80 is the newest release that still
+# works with numpy<2 and provides the modern cv2.aruco API, while satisfying
+# ultralytics' opencv>=4.8.1.78. torch/torchvision come in with ultralytics
+# (CUDA wheels by default; the container has an NVIDIA GPU). Large download.
+RUN pip3 install --no-cache-dir --break-system-packages \
+    "numpy<2" "opencv-python==4.9.0.80" "ultralytics==8.4.46" "lap>=0.5.12"
+
+# ROS Jazzy / colcon `--symlink-install` invokes `setup.py develop --editable`,
+# which setuptools >= 80 removed. Pin it back (must run AFTER the install above,
+# which may otherwise pull a newer setuptools).
+RUN pip3 install --no-cache-dir --break-system-packages "setuptools<80"
 
 # install zsh, oh-my-zsh, and completion packages
 RUN apt update && apt install -y zsh git wget zsh-syntax-highlighting zsh-autosuggestions

@@ -1,0 +1,9 @@
+# Connect the 'start' object to the 'goal' object with a collision-free path that
+# the arm will draw, avoiding the 'obstacle' object. Labels match YOLO class names
+# (case-insensitive, substring). Leave 'obstacle' empty for no obstacle to avoid.
+string start
+string goal
+string obstacle
+---
+bool success
+string message

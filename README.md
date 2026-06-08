@@ -299,6 +299,50 @@ crisp. Loosen `corner_angle` / raise `corner_dwell` if corners round off; raise
 
 ---
 
+## 9. Vision pipeline: detect → connect → draw
+
+An overhead camera detects objects on the table (YOLO) and the arm draws a
+collision-free line connecting two of them. The camera is calibrated **once**
+(`pr_calibration`: intrinsics via checkerboard + extrinsics via AprilTag → a fixed
+`camera → base_link` transform); after that there is no runtime marker. Detection
+runs continuously and connections are requested on demand via a service.
+
+Packages: `pr_calibration` (calibration + static TF), `prarob_yolo` (detection),
+`generate_trajectory` (the `connect_objects` service: pixel → `base_link` via the
+static calibration, A* path, publishes to the arm's `~/draw_path`),
+`pr_interfaces` (the `ConnectObjects` service type).
+
+```bash
+# --- one-time calibration (per camera mount) ---
+ros2 launch pr_calibration intrinsic_calibration.launch.py   # checkerboard → camera_calibration_params.yaml
+ros2 launch pr_calibration calibrate.launch.py               # AprilTag      → camera_extrinsics.yaml
+
+# --- run the system (bring up once, leave running) ---
+ros2 launch pr_controller hardware.launch.py                 # the arm (or sim.launch.py)
+ros2 launch generate_trajectory connect_objects.launch.py    # camera + YOLO + static TF + connect service
+
+# --- connect objects on demand, repeatably ---
+ros2 service call /connect_objects pr_interfaces/srv/ConnectObjects \
+    "{start: apple, goal: cup, obstacle: bottle}"
+ros2 service call /connect_objects pr_interfaces/srv/ConnectObjects \
+    "{start: pen, goal: book, obstacle: ''}"                  # empty obstacle = nothing to avoid
+```
+
+See what's currently detected (so you know which labels you can pass):
+```bash
+ros2 topic echo /detected_classes        # pr_interfaces/DetectedClasses: string[] of current class names
+```
+`/detected_objects` (visualization_msgs/MarkerArray) also shows each detection's class
+label at its `base_link` table position — add a *MarkerArray* display in RViz.
+
+Dial in against your real setup:
+- **`table_z`** (param on `connect_objects_server`, default 0.02 m) = the object/draw
+  plane height in `base_link`; set it to the actual pen drawing-contact height.
+- **Service labels** must match your YOLO model's class names (COCO by default).
+- Detected objects must lie in the arm's −y workspace; out-of-reach points are rejected.
+
+---
+
 ## Quick reference
 
 ```bash
@@ -315,4 +359,9 @@ ros2 run pr_controller draw_text_demo.py HELLO
 
 # slow it down for precision
 ros2 param set /inverse_kinematics_control draw_speed 0.03
+
+# vision pipeline: detect objects + connect them with the arm
+ros2 launch generate_trajectory connect_objects.launch.py
+ros2 service call /connect_objects pr_interfaces/srv/ConnectObjects \
+    "{start: apple, goal: cup, obstacle: bottle}"
 ```

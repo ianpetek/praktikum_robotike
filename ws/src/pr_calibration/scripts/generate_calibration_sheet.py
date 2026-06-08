@@ -55,7 +55,9 @@ def base_footprint_polygon(stl_path, px_per_mm=5.0):
 def tag_image(family, tag_id, px=1200):
     dict_id = getattr(cv2.aruco, f'DICT_APRILTAG_{family}')
     aruco_dict = cv2.aruco.getPredefinedDictionary(dict_id)
-    img = cv2.aruco.drawMarker(aruco_dict, int(tag_id), px)
+    # OpenCV >= 4.7 renamed drawMarker -> generateImageMarker; support both.
+    draw = getattr(cv2.aruco, 'generateImageMarker', None) or cv2.aruco.drawMarker
+    img = draw(aruco_dict, int(tag_id), px)
     return Image.fromarray(img)
 
 
