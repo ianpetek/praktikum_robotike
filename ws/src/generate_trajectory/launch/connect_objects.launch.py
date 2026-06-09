@@ -51,13 +51,20 @@ def generate_launch_description():
     connect_server = Node(
         package='generate_trajectory', executable='generate_path_node',
         name='connect_objects_server', output='screen',
-        parameters=[{'table_z': LaunchConfiguration('table_z')}],
+        parameters=[{
+            'table_z': LaunchConfiguration('table_z'),
+            'lift_clearance': LaunchConfiguration('lift_clearance'),
+        }],
     )
 
     return LaunchDescription([
         DeclareLaunchArgument('model', default_value='yolov8m.pt'),
         DeclareLaunchArgument('device', default_value='cuda:0'),
         DeclareLaunchArgument('table_z', default_value='0.02'),
+        DeclareLaunchArgument(
+            'lift_clearance', default_value='0.08',
+            description='pen-up height above table_z for travel moves (m); '
+                        'table_z + this must stay within the arm reach'),
         camera,
         static_tf,
         yolo,
