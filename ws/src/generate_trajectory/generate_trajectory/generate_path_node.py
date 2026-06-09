@@ -38,7 +38,7 @@ class ConnectServer(Node):
 
         self.declare_parameter('camera_frame', 'camera')
         self.declare_parameter('base_frame', 'base_link')
-        self.declare_parameter('table_z', 0.02)          # object/draw plane in base_link (m)
+        self.declare_parameter('table_z', 0.1)          # object/draw plane in base_link (m)
         self.declare_parameter('image_width', 640)
         self.declare_parameter('image_height', 480)
         self.declare_parameter('grid_resolution', 5)

@@ -15,10 +15,14 @@ tag_id: 0                    # which tag to print/detect
 tag_size_mm: 80.0            # printed black-square edge length (== apriltag "size")
 
 # Tag CENTER expressed in the base_link frame (lies flat on the table, z = 0).
+# MUST match the tag's TRUE physical position relative to base_link. The arm's
+# workspace/front is -y, so a tag in the camera-viewed workspace has NEGATIVE y.
 tag_center_in_base_mm:
   x: 0.0
-  y: 150.0                   # +y => behind the robot, out of the workspace
+  y: -150.0                  # -y => in front of the robot (workspace / camera view)
 tag_yaw_deg: 0.0             # rotation of the tag about +z relative to base_link
+                             # (if the camera POSITION is right but its heading is
+                             #  flipped in RViz, set this to 180)
 
 # Frame names used across the pipeline.
 frames:

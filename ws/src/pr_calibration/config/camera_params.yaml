@@ -2,7 +2,7 @@
 # (camera_info_url) so /camera_info carries the real camera matrix + distortion.
 /**:
     ros__parameters:
-      video_device: "/dev/video0"
+      video_device: "/dev/video4"
       framerate: 30.0
       io_method: "mmap"
       frame_id: "camera"

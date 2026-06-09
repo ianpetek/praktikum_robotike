@@ -44,7 +44,7 @@ def generate_launch_description():
 
     apriltag = Node(
         package='apriltag_ros', executable='apriltag_node', name='apriltag',
-        output='screen',
+        output='log',
         remappings=[
             ('image_rect', '/image_rect'),
             ('camera_info', '/camera_info'),
